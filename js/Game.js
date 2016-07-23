@@ -9,7 +9,7 @@ PlatformerGame.Game.prototype = {
         //  A simple background for our game
         this.backgroundSprite = this.game.add.sprite(0, 0, 'tiles');
         this.backgroundSprite.frame = 1;
-        this.backgroundSprite.scale.setTo(350,30);
+        this.backgroundSprite.scale.setTo(400,30);
 
         this.map = this.game.add.tilemap('level1');
 
@@ -24,9 +24,15 @@ PlatformerGame.Game.prototype = {
         // make the world boundaries fit the ones in the tiled map
         this.blockedLayer.resizeWorld();
 
+        var result = this.findObjectsByType('exit', this.map, 'objectLayer');
+        this.exit  = this.game.add.sprite(result[0].x, result[0].y, 'tiles');
+        this.exit.frame = 1; 
+        this.game.physics.arcade.enable(this.exit);
+
         var result = this.findObjectsByType('playerStart', this.map, 'objectLayer');
         this.player = this.game.add.sprite(result[0].x, result[0].y, 'dude');
         this.player.frame = 1; 
+
 
         //  We need to enable physics on the player
         this.game.physics.arcade.enable(this.player);
@@ -52,11 +58,12 @@ PlatformerGame.Game.prototype = {
         this.stars.enableBody = true;
 
         this.music = this.game.add.audio('music');
-        this.music.loop = true;
-     //   this.music.play();
+        
+        this.music.play('', 0, 1, false, false);
+        this.music.onStop.add(this.loopMusic, this);
 
         //  The score
-        this.scoreText = this.game.add.text(200, this.game.height/2 - 25, '', { fontSize: '32px', fill: '#5a0c0c' });
+        this.scoreText = this.game.add.text(200, this.game.height/2 - 15, '', { fontSize: '32px', fill: '#5a0c0c' });
         this.scoreText.fixedToCamera = true;
         this.score = 0;
 
@@ -66,7 +73,32 @@ PlatformerGame.Game.prototype = {
         this.timer = 0;
 
         this.showDebug = false;
+
+        for (var i = 0; i < 40; i++) {
+            this.createStar(i * 160);
+        }
+
+        
     },
+
+    loopMusic: function() {
+
+        var test = this.game.rnd.integerInRange(0,10);
+        if (test == 0) {
+            this.music.play('', 0, 1, false, false);
+        }
+        else if (test == 1) {
+            this.music.play('', 6.88, 1, false, false);
+        }
+        else if (test < 6) {            
+            this.music.play('', 10.35, 1, false, false);
+        }
+        else {
+            this.music.play('', 13.75, 1, false, false);
+        }
+        this.music.onStop.add(this.loopMusic, this);
+    },
+
 
     createStar: function(x) {
 
@@ -105,6 +137,7 @@ PlatformerGame.Game.prototype = {
         this.game.physics.arcade.collide(this.player, this.blockedLayer);
         this.game.physics.arcade.collide(this.stars, this.blockedLayer);
         this.game.physics.arcade.collide(this.player, this.stars);
+        this.game.physics.arcade.collide(this.stars, this.stars);
 
         //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
         this.game.physics.arcade.overlap(this.player, this.exit, this.collectStar, null, this);
@@ -157,15 +190,8 @@ PlatformerGame.Game.prototype = {
     },
 
     collectStar : function(player, star) {
-        
-        // Removes the star from the screen
-        star.kill();
-        if (star.dangerous) {
-            player.kill();
-        }
-
         //  Add and update the score
-        this.game.gamera.flash("5a0c0c");
+//        this.game.camera.flash(0x5a0c0c, 500);
         this.scoreText.text = 'You win!';
 
     },
